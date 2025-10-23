@@ -117,26 +117,23 @@ ENV PATH="/home/runner/venv/bin:$PATH"
 
 # Copiamos primero requirements para cachear la capa de pip
 COPY --chown=runner:runner requirements.txt ./requirements.txt
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN python -m pip install --upgrade pip && pip install -r requirements.txt
 
 # ---------- Código backend ----------
-# Debe existir `api/app.py` (o expone `app` en otro módulo; ajustá CMD si cambia)
+# Debe existir `api/app.py` que expone FastAPI como `app`
 COPY --chown=runner:runner api/ ./api
 
-# ---------- Frontend (opcional) ----------
-# Si tenés un frontend en ./site que compila a ./dist, se copia a ./api/site
-COPY --chown=runner:runner site/ ./site
-RUN if [ -d "./site" ]; then \
-      cd site && npm ci && npm run build && \
-      mkdir -p /home/runner/api/site && cp -r dist/* /home/runner/api/site/ ; \
-    fi
+# ---------- (REMOVIDO) Frontend opcional en ./site ----------
+# Si en el futuro agregás una SPA en ./site, reactivá estas líneas:
+# COPY --chown=runner:runner site/ ./site
+# RUN cd site && npm ci && npm run build && \
+#     mkdir -p /home/runner/api/site && cp -r dist/* /home/runner/api/site/
 
-# ---------- Seguridad básica del contenedor ----------
-# (No es un sandbox total, pero aplica defaults seguros para runtime web)
+# ---------- Seguridad / Health ----------
 EXPOSE 7860
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=5 \
-  CMD wget -qO- "http://127.0.0.1:${PORT}/healthz" || exit 1
+  CMD wget -qO- "http://127.0.0.1:${PORT}/health" || exit 1
 
 # ---------- Arranque ----------
-# Uvicorn sirviendo FastAPI en `api.app:app` (ajustá el módulo si es distinto)
+# Uvicorn sirviendo FastAPI en `api.app:app`
 CMD ["bash","-lc","uvicorn api.app:app --host 0.0.0.0 --port ${PORT}"]
