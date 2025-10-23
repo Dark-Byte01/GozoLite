@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code-executor-api
+    working_dir: /app
+    user: "runner"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: /app
+      SMOKE_TIMEOUT: "60"
+    volumes:
+      - ./:/app:ro
+      - runner-home:/home/runner
+    read_only: true
+    tmpfs:
+      - /tmp:rw,exec,nosuid,nodev,mode=1777,size=256m
+      - /run:rw,nosuid,nodev,mode=755,size=16m
+      - /work:rw,exec,nosuid,nodev,mode=755,size=512m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 1g
+    cpus: "1.0"
+    ulimits:
+      nofile: 65536
+    command: ["python3","-m","uvicorn","api.app:app","--host","0.0.0.0","--port","8000"]
+    expose:
+      - "8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD","python3","-c","import sys,urllib.request as u; sys.exit(0 if u.urlopen('http://127.0.0.1:8000/health').getcode()==200 else 1)"]
+      interval: 15s
+      timeout: 3s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  nginx:
+    image: nginx:latest
+    container_name: code-executor-nginx
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    volumes:
+      - ./demo/nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  runner-home:

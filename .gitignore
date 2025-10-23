@@ -1,0 +1,22 @@
+﻿# Artefactos pesados
+*.tar
+*.tar.gz
+*.tar.zst
+*.img
+*.iso
+*.zip
+*.7z
+
+# Caches / builds
+build/
+dist/
+cache/
+.tmp/
+tmp/
+__pycache__/
+*.log
+
+# Entornos
+venv/
+.env
+.DS_Store

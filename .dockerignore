@@ -1,0 +1,10 @@
+.git
+**/__pycache__
+**/*.pyc
+backup_*
+security/*.pem
+node_modules
+dist
+build
+tests/.pytest_cache
+.env

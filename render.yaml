@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: gozolite
+    env: docker
+    plan: free
+    image:
+      url: ghcr.io/dark-byte01/gozolite:latest
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 7860
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: HOST
+        value: 0.0.0.0
